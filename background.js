@@ -88,6 +88,9 @@ async function handleMessage(message, sender) {
     case 'UNINSTALL_SKILL':
       return uninstallSkill(message.gatewayId, message.skillId);
 
+    case 'WS_TEST':
+      return wsTest(message.wsUrl);
+
     case 'GATEWAY_HEALTH':
       return checkGatewayHealth(message.gatewayId);
 
@@ -303,6 +306,40 @@ async function uninstallSkill(gatewayId, skillId) {
   } catch (e) {
     return { success: false, error: e.message };
   }
+}
+
+// ── WS 臨時測試（不存入連線池）────────────────────────────────────────────────
+
+function wsTest(wsUrl) {
+  return new Promise((resolve) => {
+    if (!wsUrl) {
+      resolve({ success: false, error: '請填寫 WebSocket URL' });
+      return;
+    }
+    let ws;
+    try {
+      ws = new WebSocket(wsUrl);
+    } catch (e) {
+      resolve({ success: false, error: e.message });
+      return;
+    }
+    const start = Date.now();
+    const timer = setTimeout(() => {
+      ws.close();
+      resolve({ success: false, error: '連線逾時（10s）' });
+    }, 10000);
+
+    ws.onopen = () => {
+      clearTimeout(timer);
+      const latency = Date.now() - start;
+      ws.close();
+      resolve({ success: true, latency });
+    };
+    ws.onerror = (e) => {
+      clearTimeout(timer);
+      resolve({ success: false, error: e.message || '連線失敗' });
+    };
+  });
 }
 
 // ── Gateway 健康檢查 ──────────────────────────────────────────────────────────

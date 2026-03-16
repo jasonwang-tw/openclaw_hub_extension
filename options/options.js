@@ -97,42 +97,26 @@ function bindGatewayEvents() {
 
 async function testConnection() {
   const wsUrl = document.getElementById('gwWsUrl').value.trim();
-  const result = document.getElementById('testConnResult');
+  const resultEl = document.getElementById('testConnResult');
 
   if (!wsUrl) {
-    result.textContent = '請先填寫 WebSocket URL';
-    result.className = 'test-conn-result fail';
+    resultEl.textContent = '請先填寫 WebSocket URL';
+    resultEl.className = 'test-conn-result fail';
     return;
   }
 
-  result.textContent = '連線測試中…';
-  result.className = 'test-conn-result ing';
+  resultEl.textContent = '連線測試中…';
+  resultEl.className = 'test-conn-result ing';
 
-  // 直接用臨時 WebSocket 測試（不透過 background，避免改動儲存狀態）
-  const start = Date.now();
-  try {
-    await new Promise((resolve, reject) => {
-      const ws = new WebSocket(wsUrl);
-      const timeout = setTimeout(() => {
-        ws.close();
-        reject(new Error('逾時（10s）'));
-      }, 10000);
-      ws.onopen = () => {
-        clearTimeout(timeout);
-        ws.close();
-        resolve();
-      };
-      ws.onerror = () => {
-        clearTimeout(timeout);
-        reject(new Error('無法連線'));
-      };
-    });
-    const ms = Date.now() - start;
-    result.textContent = `✅ 連線成功（${ms}ms）`;
-    result.className = 'test-conn-result ok';
-  } catch (e) {
-    result.textContent = `❌ ${e.message}`;
-    result.className = 'test-conn-result fail';
+  // 透過 background service worker 發起 WS 測試，避免 extension page CSP 限制
+  const res = await bgMsg({ type: 'WS_TEST', wsUrl });
+
+  if (res.success) {
+    resultEl.textContent = `✅ 連線成功（${res.latency}ms）`;
+    resultEl.className = 'test-conn-result ok';
+  } else {
+    resultEl.textContent = `❌ ${res.error}`;
+    resultEl.className = 'test-conn-result fail';
   }
 }
 
