@@ -91,6 +91,49 @@ function bindGatewayEvents() {
   });
 
   document.getElementById('btnSaveGateway').addEventListener('click', saveGateway);
+
+  document.getElementById('btnTestConn').addEventListener('click', testConnection);
+}
+
+async function testConnection() {
+  const wsUrl = document.getElementById('gwWsUrl').value.trim();
+  const result = document.getElementById('testConnResult');
+
+  if (!wsUrl) {
+    result.textContent = '請先填寫 WebSocket URL';
+    result.className = 'test-conn-result fail';
+    return;
+  }
+
+  result.textContent = '連線測試中…';
+  result.className = 'test-conn-result ing';
+
+  // 直接用臨時 WebSocket 測試（不透過 background，避免改動儲存狀態）
+  const start = Date.now();
+  try {
+    await new Promise((resolve, reject) => {
+      const ws = new WebSocket(wsUrl);
+      const timeout = setTimeout(() => {
+        ws.close();
+        reject(new Error('逾時（10s）'));
+      }, 10000);
+      ws.onopen = () => {
+        clearTimeout(timeout);
+        ws.close();
+        resolve();
+      };
+      ws.onerror = () => {
+        clearTimeout(timeout);
+        reject(new Error('無法連線'));
+      };
+    });
+    const ms = Date.now() - start;
+    result.textContent = `✅ 連線成功（${ms}ms）`;
+    result.className = 'test-conn-result ok';
+  } catch (e) {
+    result.textContent = `❌ ${e.message}`;
+    result.className = 'test-conn-result fail';
+  }
 }
 
 async function saveGateway() {

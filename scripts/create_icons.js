@@ -1,8 +1,9 @@
 /**
  * 產生 OpenClaw Hub 插件圖示
  * 執行：node scripts/create_icons.js
- * 使用純 Node.js，不需要額外套件
- * 產生最小合法 PNG (使用 zlib deflate)
+ *
+ * 純 Node.js，不需要額外套件
+ * 修正：使用 Uint32Array 確保 CRC32 無符號正確計算
  */
 
 const fs = require('fs');
@@ -12,114 +13,13 @@ const zlib = require('zlib');
 const ICONS_DIR = path.join(__dirname, '..', 'icons');
 fs.mkdirSync(ICONS_DIR, { recursive: true });
 
-function createPng(size) {
-  // 繪製簡單圖示：深色背景 + 橘色螃蟹爪符號
-  const pixels = [];
-
-  for (let y = 0; y < size; y++) {
-    for (let x = 0; x < size; x++) {
-      const cx = size / 2, cy = size / 2;
-      const dx = x - cx, dy = y - cy;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      const r = size / 2;
-
-      // 背景 #1a1a2e
-      let red = 0x1a, green = 0x1a, blue = 0x2e, alpha = 255;
-
-      // 圓形裁切
-      if (dist > r - 1) {
-        alpha = 0;
-      } else if (dist <= r) {
-        // 橘色圓圈 border
-        if (dist > r * 0.72 && dist <= r * 0.88) {
-          red = 0xff; green = 0x6b; blue = 0x35;
-        }
-        // 中心：簡單的 🦞 形狀（用幾何近似）
-        const nx = dx / r, ny = dy / r; // normalize -1..1
-
-        // 主體橢圓
-        const body = (nx * nx / 0.16) + (ny * ny / 0.25);
-        if (body <= 1) {
-          red = 0xff; green = 0x6b; blue = 0x35;
-        }
-        // 爪子（左右各一個小圓）
-        const claw1 = ((nx + 0.38) * (nx + 0.38) / 0.06) + ((ny + 0.35) * (ny + 0.35) / 0.06);
-        const claw2 = ((nx - 0.38) * (nx - 0.38) / 0.06) + ((ny + 0.35) * (ny + 0.35) / 0.06);
-        if (claw1 <= 1 || claw2 <= 1) {
-          red = 0xff; green = 0x8c; blue = 0x5a;
-        }
-        // 眼睛
-        const eye1 = ((nx + 0.15) * (nx + 0.15) / 0.015) + ((ny - 0.12) * (ny - 0.12) / 0.015);
-        const eye2 = ((nx - 0.15) * (nx - 0.15) / 0.015) + ((ny - 0.12) * (ny - 0.12) / 0.015);
-        if (eye1 <= 1 || eye2 <= 1) {
-          red = 0x1a; green = 0x1a; blue = 0x2e;
-        }
-      }
-
-      pixels.push(red, green, blue, alpha);
-    }
-  }
-
-  return encodePng(size, size, pixels);
-}
-
-function encodePng(width, height, pixels) {
-  // PNG signature
-  const sig = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
-
-  // IHDR chunk
-  const ihdr = Buffer.alloc(13);
-  ihdr.writeUInt32BE(width, 0);
-  ihdr.writeUInt32BE(height, 4);
-  ihdr[8] = 8;  // bit depth
-  ihdr[9] = 6;  // RGBA
-  ihdr[10] = 0; ihdr[11] = 0; ihdr[12] = 0;
-  const ihdrChunk = makeChunk('IHDR', ihdr);
-
-  // Raw image data with filter bytes
-  const raw = Buffer.alloc(height * (1 + width * 4));
-  for (let y = 0; y < height; y++) {
-    raw[y * (1 + width * 4)] = 0; // filter: None
-    for (let x = 0; x < width; x++) {
-      const pi = (y * width + x) * 4;
-      const ri = y * (1 + width * 4) + 1 + x * 4;
-      raw[ri] = pixels[pi];
-      raw[ri+1] = pixels[pi+1];
-      raw[ri+2] = pixels[pi+2];
-      raw[ri+3] = pixels[pi+3];
-    }
-  }
-
-  const compressed = zlib.deflateSync(raw, { level: 6 });
-  const idatChunk = makeChunk('IDAT', compressed);
-  const iendChunk = makeChunk('IEND', Buffer.alloc(0));
-
-  return Buffer.concat([sig, ihdrChunk, idatChunk, iendChunk]);
-}
-
-function makeChunk(type, data) {
-  const len = Buffer.alloc(4);
-  len.writeUInt32BE(data.length);
-  const typeB = Buffer.from(type, 'ascii');
-  const crc = crc32(Buffer.concat([typeB, data]));
-  const crcB = Buffer.alloc(4);
-  crcB.writeInt32BE(crc);
-  return Buffer.concat([len, typeB, data, crcB]);
-}
-
-function crc32(buf) {
-  let crc = 0xFFFFFFFF;
-  const table = makeCrcTable();
-  for (const byte of buf) {
-    crc = table[(crc ^ byte) & 0xFF] ^ (crc >>> 8);
-  }
-  return (crc ^ 0xFFFFFFFF) | 0;
-}
+// ── CRC32（修正版：Uint32Array + writeUInt32BE）─────────────────────────────
 
 let _crcTable = null;
+
 function makeCrcTable() {
   if (_crcTable) return _crcTable;
-  _crcTable = new Int32Array(256);
+  _crcTable = new Uint32Array(256);
   for (let n = 0; n < 256; n++) {
     let c = n;
     for (let k = 0; k < 8; k++) {
@@ -130,12 +30,147 @@ function makeCrcTable() {
   return _crcTable;
 }
 
-// 產生三個尺寸
+function crc32(buf) {
+  const table = makeCrcTable();
+  let crc = 0xFFFFFFFF;
+  for (let i = 0; i < buf.length; i++) {
+    crc = table[(crc ^ buf[i]) & 0xFF] ^ (crc >>> 8);
+  }
+  return (crc ^ 0xFFFFFFFF) >>> 0; // unsigned
+}
+
+function makeChunk(type, data) {
+  const typeB = Buffer.from(type, 'ascii');
+  const len = Buffer.allocUnsafe(4);
+  len.writeUInt32BE(data.length, 0);
+  const crcVal = crc32(Buffer.concat([typeB, data]));
+  const crcB = Buffer.allocUnsafe(4);
+  crcB.writeUInt32BE(crcVal, 0); // ← 修正：writeUInt32BE（非 writeInt32BE）
+  return Buffer.concat([len, typeB, data, crcB]);
+}
+
+// ── PNG encoder ───────────────────────────────────────────────────────────────
+
+function encodePng(width, height, rgba) {
+  // PNG signature
+  const sig = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
+
+  // IHDR: width, height, bitDepth=8, colorType=6(RGBA)
+  const ihdr = Buffer.allocUnsafe(13);
+  ihdr.writeUInt32BE(width, 0);
+  ihdr.writeUInt32BE(height, 4);
+  ihdr[8] = 8; ihdr[9] = 6; ihdr[10] = 0; ihdr[11] = 0; ihdr[12] = 0;
+
+  // Raw scanlines with filter byte 0 (None) prepended to each row
+  const raw = Buffer.allocUnsafe(height * (1 + width * 4));
+  for (let y = 0; y < height; y++) {
+    raw[y * (1 + width * 4)] = 0;
+    for (let x = 0; x < width; x++) {
+      const src = (y * width + x) * 4;
+      const dst = y * (1 + width * 4) + 1 + x * 4;
+      raw[dst]     = rgba[src];
+      raw[dst + 1] = rgba[src + 1];
+      raw[dst + 2] = rgba[src + 2];
+      raw[dst + 3] = rgba[src + 3];
+    }
+  }
+
+  const compressed = zlib.deflateSync(raw, { level: 9 });
+
+  return Buffer.concat([
+    sig,
+    makeChunk('IHDR', ihdr),
+    makeChunk('IDAT', compressed),
+    makeChunk('IEND', Buffer.alloc(0))
+  ]);
+}
+
+// ── Icon 繪製：橘色蟹爪 + 深色背景 ───────────────────────────────────────────
+
+function drawIcon(size) {
+  const rgba = new Uint8Array(size * size * 4);
+
+  // 色票
+  const BG   = [0x1a, 0x1a, 0x2e]; // #1a1a2e 深藍底
+  const RIM  = [0xff, 0x6b, 0x35]; // #ff6b35 橘色框
+  const BODY = [0xff, 0x6b, 0x35]; // #ff6b35 主體
+  const CLAW = [0xff, 0xa0, 0x60]; // #ffa060 爪子（淺橘）
+  const EYE  = [0x1a, 0x1a, 0x2e]; // 眼睛（深色）
+
+  const cx = (size - 1) / 2;
+  const cy = (size - 1) / 2;
+  const R  = size / 2;
+
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const dx = x - cx;
+      const dy = y - cy;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      // 圓形遮罩（帶 AA）
+      const alpha = dist > R ? 0
+        : dist > R - 1 ? Math.round((R - dist) * 255)
+        : 255;
+
+      if (alpha === 0) {
+        setPixel(rgba, size, x, y, 0, 0, 0, 0);
+        continue;
+      }
+
+      // 座標正規化 -1..1
+      const nx = dx / R;
+      const ny = dy / R;
+
+      let color = BG;
+
+      // 橘色圓環框
+      if (dist >= R * 0.80 && dist < R * 0.95) {
+        color = RIM;
+      }
+
+      // 蟹身（橢圓）
+      const body = (nx * nx) / 0.18 + (ny * ny) / 0.28;
+      if (body <= 1.0) color = BODY;
+
+      // 觸角（左右短棍）—— 僅較大尺寸繪製
+      if (size >= 48) {
+        const ant1 = Math.abs(nx + 0.28) < 0.06 && ny < -0.28 && ny > -0.60;
+        const ant2 = Math.abs(nx - 0.28) < 0.06 && ny < -0.28 && ny > -0.60;
+        if (ant1 || ant2) color = CLAW;
+      }
+
+      // 爪子（左右下角小圓）
+      const claw1 = (nx + 0.38) ** 2 / 0.07 + (ny - 0.42) ** 2 / 0.07;
+      const claw2 = (nx - 0.38) ** 2 / 0.07 + (ny - 0.42) ** 2 / 0.07;
+      if (claw1 <= 1.0 || claw2 <= 1.0) color = CLAW;
+
+      // 眼睛（蟹身上方兩個小點）
+      if (size >= 32) {
+        const eye1 = (nx + 0.18) ** 2 / 0.018 + (ny + 0.14) ** 2 / 0.018;
+        const eye2 = (nx - 0.18) ** 2 / 0.018 + (ny + 0.14) ** 2 / 0.018;
+        if (eye1 <= 1.0 || eye2 <= 1.0) color = EYE;
+      }
+
+      setPixel(rgba, size, x, y, color[0], color[1], color[2], alpha);
+    }
+  }
+
+  return rgba;
+}
+
+function setPixel(buf, size, x, y, r, g, b, a) {
+  const i = (y * size + x) * 4;
+  buf[i] = r; buf[i+1] = g; buf[i+2] = b; buf[i+3] = a;
+}
+
+// ── 產生並輸出 ────────────────────────────────────────────────────────────────
+
 [16, 48, 128].forEach(size => {
-  const png = createPng(size);
+  const pixels = drawIcon(size);
+  const png = encodePng(size, size, pixels);
   const outPath = path.join(ICONS_DIR, `icon${size}.png`);
   fs.writeFileSync(outPath, png);
-  console.log(`✅ icons/icon${size}.png (${png.length} bytes)`);
+  console.log(`✅ icons/icon${size}.png  (${png.length} bytes)`);
 });
 
 console.log('\n🦞 OpenClaw Hub icons 產生完成！');

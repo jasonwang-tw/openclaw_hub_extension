@@ -290,6 +290,23 @@ html, body {
   border-color: var(--accent);
 }
 
+.test-conn-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.test-conn-result {
+  font-size: 12px;
+  color: var(--text3);
+  flex: 1;
+  transition: color 0.2s;
+}
+
+.test-conn-result.ok   { color: var(--success); }
+.test-conn-result.fail { color: var(--error); }
+.test-conn-result.ing  { color: var(--warning); }
+
 .modal-actions {
   display: flex;
   justify-content: flex-end;
