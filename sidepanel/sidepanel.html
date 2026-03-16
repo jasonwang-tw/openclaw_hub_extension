@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OpenClaw Hub</title>
+  <link rel="stylesheet" href="sidepanel.css">
+</head>
+<body class="dark">
+
+  <!-- 頂部導覽 -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <span class="logo">🦞</span>
+      <span class="gateway-name" id="gatewayName">未連線</span>
+      <span class="status-dot" id="statusDot"></span>
+    </div>
+    <div class="topbar-right">
+      <button class="icon-btn" id="btnTabContext" title="擷取頁面內容">📄</button>
+      <button class="icon-btn" id="btnNewChat" title="新對話">✏️</button>
+      <button class="icon-btn" id="btnHistory" title="對話紀錄">📋</button>
+      <button class="icon-btn" id="btnOptions" title="設定">⚙️</button>
+    </div>
+  </header>
+
+  <!-- 無 Gateway 提示 -->
+  <div class="no-gateway" id="noGateway" style="display:none">
+    <div class="no-gateway-icon">🦞</div>
+    <h3>尚未設定 Gateway</h3>
+    <p>請先至設定頁面新增 OpenClaw Gateway 連線</p>
+    <button class="btn-primary" id="btnGoOptions">前往設定</button>
+  </div>
+
+  <!-- 歷史側欄 -->
+  <div class="history-panel" id="historyPanel" style="display:none">
+    <div class="history-header">
+      <span>對話紀錄</span>
+      <button class="icon-btn" id="btnCloseHistory">✕</button>
+    </div>
+    <div class="history-list" id="historyList"></div>
+  </div>
+
+  <!-- Tab 頁面內容預覽 -->
+  <div class="tab-context-bar" id="tabContextBar" style="display:none">
+    <span class="tab-context-icon">📄</span>
+    <span class="tab-context-title" id="tabContextTitle">頁面內容已附加</span>
+    <button class="tab-context-remove" id="btnRemoveContext">✕</button>
+  </div>
+
+  <!-- 聊天區域 -->
+  <main class="chat-main" id="chatMain">
+    <div class="messages" id="messages">
+      <div class="welcome-msg">
+        <div class="welcome-icon">🦞</div>
+        <p>OpenClaw Hub 已連線</p>
+        <p class="welcome-sub">輸入訊息開始對話，或使用 <kbd>/</kbd> 呼叫指令</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- 輸入區 -->
+  <footer class="input-area">
+    <div class="model-row">
+      <select class="model-select" id="modelSelect">
+        <option value="claude-sonnet-4-6">Sonnet 4.6</option>
+        <option value="claude-opus-4-6">Opus 4.6</option>
+        <option value="claude-haiku-4-5-20251001">Haiku 4.5</option>
+        <option value="gpt-4o">GPT-4o</option>
+        <option value="gpt-4o-mini">GPT-4o mini</option>
+      </select>
+    </div>
+    <div class="input-row">
+      <textarea
+        id="messageInput"
+        class="message-input"
+        placeholder="輸入訊息… /new 新對話"
+        rows="1"
+      ></textarea>
+      <button class="send-btn" id="sendBtn" title="傳送 (Enter)">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+          <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+        </svg>
+      </button>
+    </div>
+  </footer>
+
+  <script src="sidepanel.js" type="module"></script>
+</body>
+</html>

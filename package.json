@@ -1,0 +1,11 @@
+{
+  "name": "openclaw-hub-extension",
+  "version": "1.0.0",
+  "description": "OpenClaw Gateway Chrome 擴充功能 — 側邊欄聊天、多 Gateway 管理、Skills 市場、用量追蹤",
+  "private": true,
+  "scripts": {
+    "icons": "node scripts/create_icons.js",
+    "build": "node scripts/create_icons.js",
+    "pack": "node -e \"const fs=require('fs');const path=require('path');const {execSync}=require('child_process');execSync('powershell Compress-Archive -Path manifest.json,background.js,sidepanel,options,icons -DestinationPath openclaw_hub_extension.zip -Force')\""
+  }
+}

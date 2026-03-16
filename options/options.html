@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OpenClaw Hub 設定</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body class="dark">
+
+  <div class="app">
+    <!-- 側邊導覽 -->
+    <nav class="sidebar">
+      <div class="sidebar-logo">
+        <span>🦞</span>
+        <span class="sidebar-title">OpenClaw Hub</span>
+      </div>
+      <ul class="nav-list">
+        <li class="nav-item active" data-tab="gateway">🔗 Gateway</li>
+        <li class="nav-item" data-tab="skills">🧩 Skills</li>
+        <li class="nav-item" data-tab="usage">📊 用量</li>
+        <li class="nav-item" data-tab="settings">⚙️ 設定</li>
+      </ul>
+      <div class="sidebar-footer">
+        <span class="version">v1.0.0</span>
+      </div>
+    </nav>
+
+    <!-- 主內容 -->
+    <main class="content">
+
+      <!-- ── Gateway Tab ── -->
+      <section class="tab-content active" id="tab-gateway">
+        <div class="section-header">
+          <h2>Gateway 管理</h2>
+          <button class="btn-primary" id="btnAddGateway">+ 新增 Gateway</button>
+        </div>
+
+        <div id="gatewayList" class="gateway-list"></div>
+
+        <!-- 新增/編輯表單 -->
+        <div class="modal" id="gatewayModal" style="display:none">
+          <div class="modal-box">
+            <h3 id="modalTitle">新增 Gateway</h3>
+            <div class="form-group">
+              <label>名稱</label>
+              <input type="text" id="gwName" placeholder="我的 Gateway">
+            </div>
+            <div class="form-group">
+              <label>WebSocket URL</label>
+              <input type="text" id="gwWsUrl" placeholder="ws://127.0.0.1:18789">
+            </div>
+            <div class="form-group">
+              <label>HTTP URL</label>
+              <input type="text" id="gwHttpUrl" placeholder="http://127.0.0.1:18789">
+            </div>
+            <div class="form-group">
+              <label>API Key <span class="optional">（選填）</span></label>
+              <input type="password" id="gwApiKey" placeholder="sk-...">
+            </div>
+            <div class="modal-actions">
+              <button class="btn-ghost" id="btnCancelGateway">取消</button>
+              <button class="btn-primary" id="btnSaveGateway">儲存</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Skills Tab ── -->
+      <section class="tab-content" id="tab-skills">
+        <div class="section-header">
+          <h2>Skills 管理</h2>
+          <button class="btn-ghost" id="btnRefreshSkills">↻ 重新整理</button>
+        </div>
+
+        <div class="skills-tabs">
+          <button class="skills-tab active" data-st="installed">已安裝</button>
+          <button class="skills-tab" data-st="marketplace">市場</button>
+        </div>
+
+        <div id="skillsInstalled" class="skills-grid"></div>
+        <div id="skillsMarketplace" class="skills-grid" style="display:none"></div>
+      </section>
+
+      <!-- ── Usage Tab ── -->
+      <section class="tab-content" id="tab-usage">
+        <div class="section-header">
+          <h2>用量統計</h2>
+          <select id="usagePeriod" class="select-sm">
+            <option value="7">近 7 天</option>
+            <option value="30">近 30 天</option>
+          </select>
+        </div>
+
+        <div class="usage-summary" id="usageSummary">
+          <div class="summary-card">
+            <div class="summary-label">總 Token 用量</div>
+            <div class="summary-value" id="totalTokens">-</div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-label">估計費用 (USD)</div>
+            <div class="summary-value" id="totalCost">-</div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-label">活躍天數</div>
+            <div class="summary-value" id="activeDays">-</div>
+          </div>
+        </div>
+
+        <div class="chart-section">
+          <h3>每日 Token 用量</h3>
+          <div class="chart-container">
+            <svg id="usageChart" width="100%" height="180"></svg>
+          </div>
+        </div>
+
+        <div class="usage-table-section">
+          <h3>依模型分類</h3>
+          <table class="usage-table" id="usageTable">
+            <thead>
+              <tr>
+                <th>模型</th>
+                <th>輸入 Tokens</th>
+                <th>輸出 Tokens</th>
+                <th>費用 (USD)</th>
+              </tr>
+            </thead>
+            <tbody id="usageTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ── Settings Tab ── -->
+      <section class="tab-content" id="tab-settings">
+        <div class="section-header">
+          <h2>設定</h2>
+        </div>
+
+        <div class="settings-group">
+          <h3>外觀</h3>
+          <div class="setting-row">
+            <div class="setting-label">
+              <span>主題</span>
+              <span class="setting-desc">切換深色 / 淺色模式</span>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="themeToggle">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <h3>預設模型</h3>
+          <select id="defaultModel" class="select-full">
+            <option value="claude-sonnet-4-6">Claude Sonnet 4.6</option>
+            <option value="claude-opus-4-6">Claude Opus 4.6</option>
+            <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5</option>
+            <option value="gpt-4o">GPT-4o</option>
+            <option value="gpt-4o-mini">GPT-4o mini</option>
+          </select>
+        </div>
+
+        <div class="settings-group">
+          <h3>資料管理</h3>
+          <div class="setting-row">
+            <div class="setting-label">
+              <span>清除對話紀錄</span>
+              <span class="setting-desc">刪除所有聊天歷史</span>
+            </div>
+            <button class="btn-danger" id="btnClearChats">清除</button>
+          </div>
+          <div class="setting-row">
+            <div class="setting-label">
+              <span>清除用量統計</span>
+              <span class="setting-desc">重置所有 token 統計資料</span>
+            </div>
+            <button class="btn-danger" id="btnClearUsage">清除</button>
+          </div>
+          <div class="setting-row">
+            <div class="setting-label">
+              <span>重置所有設定</span>
+              <span class="setting-desc">恢復出廠預設值</span>
+            </div>
+            <button class="btn-danger" id="btnResetAll">重置</button>
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <h3>關於</h3>
+          <div class="about-box">
+            <div>🦞 <strong>OpenClaw Hub</strong> v1.0.0</div>
+            <div class="about-desc">OpenClaw Gateway Chrome 擴充功能</div>
+            <div class="about-desc">超越競品 OpenClaw Copilot：多 Gateway 管理、Skills 市場、用量圖表</div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script src="options.js" type="module"></script>
+</body>
+</html>
