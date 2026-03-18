@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>OpenClaw Hub 設定</title>
   <link rel="stylesheet" href="options.css">
+  <script src="../lib/lucide.min.js"></script>
 </head>
 <body class="dark">
 
@@ -12,14 +13,14 @@
     <!-- 側邊導覽 -->
     <nav class="sidebar">
       <div class="sidebar-logo">
-        <span>🦞</span>
+        <span><img src="../icons/icon48.png" width="24" height="24" alt="OpenClaw Hub"></span>
         <span class="sidebar-title">OpenClaw Hub</span>
       </div>
       <ul class="nav-list">
-        <li class="nav-item active" data-tab="gateway">🔗 Gateway</li>
-        <li class="nav-item" data-tab="skills">🧩 Skills</li>
-        <li class="nav-item" data-tab="usage">📊 用量</li>
-        <li class="nav-item" data-tab="settings">⚙️ 設定</li>
+        <li class="nav-item active" data-tab="gateway"><i data-lucide="link"></i> Gateway</li>
+        <li class="nav-item" data-tab="skills"><i data-lucide="puzzle"></i> Skills</li>
+        <li class="nav-item" data-tab="usage"><i data-lucide="bar-chart-2"></i> 用量</li>
+        <li class="nav-item" data-tab="settings"><i data-lucide="settings"></i> 設定</li>
       </ul>
       <div class="sidebar-footer">
         <span class="version">v1.0.0</span>
@@ -59,7 +60,7 @@
               <input type="password" id="gwApiKey" placeholder="sk-...">
             </div>
             <div class="test-conn-row">
-              <button class="btn-ghost" id="btnTestConn">⚡ 測試連線</button>
+              <button class="btn-ghost" id="btnTestConn"><i data-lucide="zap"></i> 測試連線</button>
               <span class="test-conn-result" id="testConnResult"></span>
             </div>
             <div class="modal-actions">
@@ -74,7 +75,7 @@
       <section class="tab-content" id="tab-skills">
         <div class="section-header">
           <h2>Skills 管理</h2>
-          <button class="btn-ghost" id="btnRefreshSkills">↻ 重新整理</button>
+          <button class="btn-ghost" id="btnRefreshSkills"><i data-lucide="refresh-cw"></i> 重新整理</button>
         </div>
 
         <div class="skills-tabs">
@@ -193,7 +194,7 @@
         <div class="settings-group">
           <h3>關於</h3>
           <div class="about-box">
-            <div>🦞 <strong>OpenClaw Hub</strong> v1.0.0</div>
+            <div><img src="../icons/icon48.png" width="20" height="20" alt="OpenClaw Hub" style="vertical-align:middle;margin-right:4px"><strong>OpenClaw Hub</strong> v1.0.0</div>
             <div class="about-desc">OpenClaw Gateway Chrome 擴充功能</div>
             <div class="about-desc">超越競品 OpenClaw Copilot：多 Gateway 管理、Skills 市場、用量圖表</div>
           </div>
@@ -203,6 +204,7 @@
     </main>
   </div>
 
+  <script>lucide.createIcons();</script>
   <script src="options.js" type="module"></script>
 </body>
 </html>

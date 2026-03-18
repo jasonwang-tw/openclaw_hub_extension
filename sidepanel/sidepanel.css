@@ -449,3 +449,22 @@ kbd {
 
 .send-btn:hover { background: var(--accent2); }
 .send-btn:disabled { background: var(--surface2); cursor: not-allowed; }
+
+/* Lucide icons */
+[data-lucide] {
+  display: inline-block;
+  vertical-align: middle;
+}
+.icon-btn [data-lucide] {
+  width: 16px;
+  height: 16px;
+}
+.tab-context-icon [data-lucide] {
+  width: 14px;
+  height: 14px;
+}
+.no-gateway-icon img,
+.welcome-icon img {
+  display: block;
+  margin: 0 auto;
+}

@@ -5,7 +5,11 @@
   "private": true,
   "scripts": {
     "icons": "node scripts/create_icons.js",
-    "build": "node scripts/create_icons.js",
-    "pack": "node -e \"const fs=require('fs');const path=require('path');const {execSync}=require('child_process');execSync('powershell Compress-Archive -Path manifest.json,background.js,sidepanel,options,icons -DestinationPath openclaw_hub_extension.zip -Force')\""
+    "lib": "node -e \"require('fs').copyFileSync('node_modules/lucide/dist/umd/lucide.min.js','lib/lucide.min.js');console.log('lucide.min.js copied')\"",
+    "build": "npm run icons && npm run lib",
+    "pack": "node -e \"const fs=require('fs');const path=require('path');const {execSync}=require('child_process');execSync('powershell Compress-Archive -Path manifest.json,background.js,sidepanel,options,icons,lib -DestinationPath openclaw_hub_extension.zip -Force')\""
+  },
+  "dependencies": {
+    "lucide": "^0.577.0"
   }
 }

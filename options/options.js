@@ -36,10 +36,11 @@ async function loadGateways() {
   if (gateways.length === 0) {
     list.innerHTML = `
       <div class="empty-state">
-        <div class="empty-state-icon">🔗</div>
+        <div class="empty-state-icon"><i data-lucide="link"></i></div>
         <p>尚無 Gateway，點擊「新增 Gateway」開始連線</p>
       </div>
     `;
+    lucide.createIcons();
     return;
   }
 
@@ -54,13 +55,14 @@ async function loadGateways() {
         <div class="gw-url">${escHtml(gw.wsUrl)}</div>
       </div>
       <div class="gw-actions">
-        <button class="gw-btn" data-action="health" data-id="${gw.id}" title="健康檢查">⚡</button>
+        <button class="gw-btn" data-action="health" data-id="${gw.id}" title="健康檢查"><i data-lucide="zap"></i></button>
         ${gw.id !== activeGatewayId ? `<button class="gw-btn" data-action="setDefault" data-id="${gw.id}">設為預設</button>` : ''}
         <button class="gw-btn" data-action="edit" data-id="${gw.id}">編輯</button>
         <button class="gw-btn danger" data-action="delete" data-id="${gw.id}">刪除</button>
       </div>
     </div>
   `).join('');
+  lucide.createIcons();
 
   // 事件委派
   list.addEventListener('click', async (e) => {
@@ -112,10 +114,10 @@ async function testConnection() {
   const res = await bgMsg({ type: 'WS_TEST', wsUrl });
 
   if (res.success) {
-    resultEl.textContent = `✅ 連線成功（${res.latency}ms）`;
+    resultEl.textContent = `✓ 連線成功（${res.latency}ms）`;
     resultEl.className = 'test-conn-result ok';
   } else {
-    resultEl.textContent = `❌ ${res.error}`;
+    resultEl.textContent = `✕ ${res.error}`;
     resultEl.className = 'test-conn-result fail';
   }
 }
@@ -196,8 +198,8 @@ async function deleteGateway(id) {
 async function checkHealth(id) {
   const result = await bgMsg({ type: 'GATEWAY_HEALTH', gatewayId: id });
   const msg = result.success && result.healthy
-    ? `✅ 連線正常（延遲 ${result.latency}ms）`
-    : `❌ 連線失敗：${result.error || '無回應'}`;
+    ? `✓ 連線正常（延遲 ${result.latency}ms）`
+    : `✕ 連線失敗：${result.error || '無回應'}`;
   alert(msg);
   loadGateways();
 }
@@ -225,10 +227,11 @@ async function loadSkills() {
   if (!activeGatewayId) {
     document.getElementById('skillsInstalled').innerHTML = `
       <div class="empty-state">
-        <div class="empty-state-icon">🔗</div>
+        <div class="empty-state-icon"><i data-lucide="link"></i></div>
         <p>請先設定 Gateway</p>
       </div>
     `;
+    lucide.createIcons();
     return;
   }
 
@@ -237,10 +240,11 @@ async function loadSkills() {
   if (!result.success) {
     document.getElementById('skillsInstalled').innerHTML = `
       <div class="empty-state">
-        <div class="empty-state-icon">⚠️</div>
+        <div class="empty-state-icon"><i data-lucide="triangle-alert"></i></div>
         <p>無法載入 Skills：${result.error}</p>
       </div>
     `;
+    lucide.createIcons();
     return;
   }
 
@@ -253,10 +257,11 @@ function renderSkills(skills, gatewayId) {
   if (skills.length === 0) {
     container.innerHTML = `
       <div class="empty-state">
-        <div class="empty-state-icon">🧩</div>
+        <div class="empty-state-icon"><i data-lucide="puzzle"></i></div>
         <p>尚未安裝任何 Skill</p>
       </div>
     `;
+    lucide.createIcons();
     return;
   }
 
@@ -288,6 +293,7 @@ function renderSkills(skills, gatewayId) {
       else alert('移除失敗：' + result.error);
     });
   });
+  lucide.createIcons();
 }
 
 async function loadMarketplaceSkills() {
@@ -300,10 +306,11 @@ async function loadMarketplaceSkills() {
   } catch (e) {
     document.getElementById('skillsMarketplace').innerHTML = `
       <div class="empty-state">
-        <div class="empty-state-icon">🌐</div>
+        <div class="empty-state-icon"><i data-lucide="globe"></i></div>
         <p>無法連線至 Skills 市場：${e.message}</p>
       </div>
     `;
+    lucide.createIcons();
   }
 }
 
@@ -343,6 +350,7 @@ function renderMarketplace(items) {
       if (result.success) setTimeout(loadSkills, 500);
     });
   });
+  lucide.createIcons();
 }
 
 // ── USAGE ────────────────────────────────────────────────────────────────────
@@ -466,14 +474,14 @@ function bindSettingsEvents() {
   document.getElementById('btnClearChats').addEventListener('click', async () => {
     if (!confirm('確定清除所有對話紀錄？')) return;
     await chrome.storage.local.set({ chatSessions: [], activeChatId: null });
-    alert('✅ 對話紀錄已清除');
+    alert('對話紀錄已清除');
   });
 
   document.getElementById('btnClearUsage').addEventListener('click', async () => {
     if (!confirm('確定清除用量統計？')) return;
     await chrome.storage.local.set({ usageMetrics: {} });
     renderUsage();
-    alert('✅ 用量統計已清除');
+    alert('用量統計已清除');
   });
 
   document.getElementById('btnResetAll').addEventListener('click', async () => {
@@ -487,7 +495,7 @@ function bindSettingsEvents() {
       settings: { defaultModel: 'claude-sonnet-4-6', theme: 'dark' },
       usageMetrics: {}
     });
-    alert('✅ 已重置完成');
+    alert('已重置完成');
     loadGateways();
     loadSettings();
   });

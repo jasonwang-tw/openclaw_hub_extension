@@ -5,27 +5,28 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>OpenClaw Hub</title>
   <link rel="stylesheet" href="sidepanel.css">
+  <script src="../lib/lucide.min.js"></script>
 </head>
 <body class="dark">
 
   <!-- 頂部導覽 -->
   <header class="topbar">
     <div class="topbar-left">
-      <span class="logo">🦞</span>
+      <span class="logo"><img src="../icons/icon48.png" width="22" height="22" alt="OpenClaw Hub"></span>
       <span class="gateway-name" id="gatewayName">未連線</span>
       <span class="status-dot" id="statusDot"></span>
     </div>
     <div class="topbar-right">
-      <button class="icon-btn" id="btnTabContext" title="擷取頁面內容">📄</button>
-      <button class="icon-btn" id="btnNewChat" title="新對話">✏️</button>
-      <button class="icon-btn" id="btnHistory" title="對話紀錄">📋</button>
-      <button class="icon-btn" id="btnOptions" title="設定">⚙️</button>
+      <button class="icon-btn" id="btnTabContext" title="擷取頁面內容"><i data-lucide="file-text"></i></button>
+      <button class="icon-btn" id="btnNewChat" title="新對話"><i data-lucide="square-pen"></i></button>
+      <button class="icon-btn" id="btnHistory" title="對話紀錄"><i data-lucide="clock"></i></button>
+      <button class="icon-btn" id="btnOptions" title="設定"><i data-lucide="settings"></i></button>
     </div>
   </header>
 
   <!-- 無 Gateway 提示 -->
   <div class="no-gateway" id="noGateway" style="display:none">
-    <div class="no-gateway-icon">🦞</div>
+    <div class="no-gateway-icon"><img src="../icons/icon128.png" width="52" height="52" alt="OpenClaw Hub"></div>
     <h3>尚未設定 Gateway</h3>
     <p>請先至設定頁面新增 OpenClaw Gateway 連線</p>
     <button class="btn-primary" id="btnGoOptions">前往設定</button>
@@ -42,7 +43,7 @@
 
   <!-- Tab 頁面內容預覽 -->
   <div class="tab-context-bar" id="tabContextBar" style="display:none">
-    <span class="tab-context-icon">📄</span>
+    <span class="tab-context-icon"><i data-lucide="file-text"></i></span>
     <span class="tab-context-title" id="tabContextTitle">頁面內容已附加</span>
     <button class="tab-context-remove" id="btnRemoveContext">✕</button>
   </div>
@@ -51,7 +52,7 @@
   <main class="chat-main" id="chatMain">
     <div class="messages" id="messages">
       <div class="welcome-msg">
-        <div class="welcome-icon">🦞</div>
+        <div class="welcome-icon"><img src="../icons/icon128.png" width="52" height="52" alt="OpenClaw Hub"></div>
         <p>OpenClaw Hub 已連線</p>
         <p class="welcome-sub">輸入訊息開始對話，或使用 <kbd>/</kbd> 呼叫指令</p>
       </div>
@@ -84,6 +85,7 @@
     </div>
   </footer>
 
+  <script>lucide.createIcons();</script>
   <script src="sidepanel.js" type="module"></script>
 </body>
 </html>

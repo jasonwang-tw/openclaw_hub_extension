@@ -552,3 +552,33 @@ html, body {
 }
 
 .empty-state-icon { font-size: 36px; margin-bottom: 12px; }
+
+/* Lucide icons */
+[data-lucide] {
+  display: inline-block;
+  vertical-align: middle;
+}
+.icon-btn [data-lucide],
+.icon-btn svg {
+  width: 16px;
+  height: 16px;
+}
+.nav-item [data-lucide] {
+  width: 15px;
+  height: 15px;
+  margin-right: 2px;
+}
+.empty-state-icon [data-lucide] {
+  width: 36px;
+  height: 36px;
+}
+.btn-ghost [data-lucide],
+.btn-primary [data-lucide] {
+  width: 14px;
+  height: 14px;
+  margin-right: 4px;
+}
+.gw-btn [data-lucide] {
+  width: 14px;
+  height: 14px;
+}

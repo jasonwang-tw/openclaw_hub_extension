@@ -173,7 +173,7 @@ async function sendMessage() {
 
   if (!result.success) {
     currentStreamBubble.classList.remove('streaming-cursor');
-    currentStreamBubble.textContent = `❌ ${result.error}`;
+    currentStreamBubble.textContent = `${result.error}`;
     currentStreamBubble.classList.add('error');
     finishStreaming();
   }
@@ -220,7 +220,7 @@ function handleWsMessage(data) {
   } else if (data.type === 'done' || data.event === 'run_finished') {
     finishStreaming();
   } else if (data.type === 'error') {
-    currentStreamBubble.textContent = `❌ ${data.message || '發生錯誤'}`;
+    currentStreamBubble.textContent = `${data.message || '發生錯誤'}`;
     finishStreaming();
   } else if (data.type === 'usage' && data.usage) {
     // 記錄用量
@@ -292,7 +292,7 @@ function createNewSession() {
   const messages = document.getElementById('messages');
   messages.innerHTML = `
     <div class="welcome-msg">
-      <div class="welcome-icon">🦞</div>
+      <div class="welcome-icon"><img src="../icons/icon128.png" width="52" height="52" alt="OpenClaw Hub"></div>
       <p>OpenClaw Hub 已連線</p>
       <p class="welcome-sub">輸入訊息開始對話，或使用 <kbd>/</kbd> 呼叫指令</p>
     </div>
@@ -384,7 +384,7 @@ async function captureTabContext() {
 
   tabContextData = result.content;
   const bar = document.getElementById('tabContextBar');
-  document.getElementById('tabContextTitle').textContent = `📄 ${result.content.title}`;
+  document.getElementById('tabContextTitle').textContent = `${result.content.title}`;
   bar.style.display = 'flex';
 }
 
