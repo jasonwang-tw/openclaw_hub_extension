@@ -53,12 +53,25 @@
             </div>
             <div class="form-group">
               <label>HTTP URL</label>
-              <input type="text" id="gwHttpUrl" placeholder="http://127.0.0.1:18789">
+              <input type="text" id="gwHttpUrl" placeholder="https://clawbot.zeabur.app">
             </div>
             <div class="form-group">
-              <label>API Key <span class="optional">（選填）</span></label>
-              <input type="password" id="gwApiKey" placeholder="sk-...">
+              <label>Gateway Token <span class="optional">（雲端部署必填）</span></label>
+              <input type="password" id="gwApiKey" placeholder="7Qz80bCnEA3Xue2tT6qr09R5wof...">
             </div>
+
+            <hr style="border:none;border-top:1px solid var(--border);margin:12px 0">
+            <h4 style="margin:0 0 8px;font-size:13px;color:var(--text2)">Hub 代理模式 <span class="optional">（選填，解決 Origin 限制）</span></h4>
+            <div class="form-group">
+              <label>Hub 帳號</label>
+              <input type="text" id="gwHubUser" placeholder="admin">
+            </div>
+            <div class="form-group">
+              <label>Hub 密碼</label>
+              <input type="password" id="gwHubPass" placeholder="密碼">
+            </div>
+            <p style="font-size:11px;color:var(--text3);margin:0 0 8px">填寫 Hub 帳密後，聊天將透過 HTTP URL 的 /api/chat 代理，不直接連線 Gateway WebSocket。</p>
+
             <div class="test-conn-row">
               <button class="btn-ghost" id="btnTestConn"><i data-lucide="zap"></i> 測試連線</button>
               <span class="test-conn-result" id="testConnResult"></span>
@@ -158,6 +171,9 @@
         <div class="settings-group">
           <h3>預設模型</h3>
           <select id="defaultModel" class="select-full">
+            <option value="minimax-portal/MiniMax-M2.5">MiniMax M2.5</option>
+            <option value="minimax-portal/MiniMax-M2.1-lightning">MiniMax M2.1 Lightning</option>
+            <option value="minimax-portal/MiniMax-M2.1">MiniMax M2.1</option>
             <option value="claude-sonnet-4-6">Claude Sonnet 4.6</option>
             <option value="claude-opus-4-6">Claude Opus 4.6</option>
             <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5</option>
@@ -204,7 +220,6 @@
     </main>
   </div>
 
-  <script>lucide.createIcons();</script>
   <script src="options.js" type="module"></script>
 </body>
 </html>

@@ -12,6 +12,7 @@ let currentStreamBubble = null;
 
 // ── 初始化 ───────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
+  lucide.createIcons();
   await loadState();
   bindEvents();
   listenBackground();
@@ -19,7 +20,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function loadState() {
   const data = await chrome.storage.local.get([
-    'gateways', 'activeGatewayId', 'chatSessions', 'activeChatId', 'settings'
+    'gateways', 'activeGatewayId', 'chatSessions', 'activeChatId', 'settings', 'importedModels'
   ]);
 
   chatSessions = data.chatSessions || [];
@@ -30,9 +31,17 @@ async function loadState() {
     document.body.classList.replace('dark', 'light');
   }
 
+  // 載入模型列表（優先使用匯入的模型）
+  const sel = document.getElementById('modelSelect');
+  if (data.importedModels?.length) {
+    sel.innerHTML = data.importedModels.map(m =>
+      `<option value="${escHtml(m.id)}">${escHtml(m.name)}</option>`
+    ).join('');
+  }
+
   // 套用預設 model
   if (data.settings?.defaultModel) {
-    document.getElementById('modelSelect').value = data.settings.defaultModel;
+    sel.value = data.settings.defaultModel;
   }
 
   const gateways = data.gateways || [];
@@ -61,7 +70,12 @@ async function loadState() {
 async function connectGateway() {
   if (!activeGateway) return;
   setStatus('connecting');
-  const result = await bgMsg({ type: 'WS_CONNECT', gatewayId: activeGateway.id, url: activeGateway.wsUrl });
+  const result = await bgMsg({
+    type: 'WS_CONNECT',
+    gatewayId: activeGateway.id,
+    url: activeGateway.wsUrl,
+    apiKey: activeGateway.apiKey
+  });
   setStatus(result.success ? 'connected' : 'error');
 }
 
@@ -120,6 +134,21 @@ function bindEvents() {
     settings.defaultModel = e.target.value;
     await chrome.storage.local.set({ settings });
   });
+
+  // 重新載入模型按鈕
+  document.getElementById('btnRefreshModels').addEventListener('click', async () => {
+    const { importedModels } = await chrome.storage.local.get('importedModels');
+    if (!importedModels?.length) {
+      chrome.runtime.openOptionsPage();
+      return;
+    }
+    const sel = document.getElementById('modelSelect');
+    const current = sel.value;
+    sel.innerHTML = importedModels.map(m =>
+      `<option value="${m.id}">${m.name}</option>`
+    ).join('');
+    if ([...sel.options].some(o => o.value === current)) sel.value = current;
+  });
 }
 
 function autoResizeTextarea() {
@@ -168,6 +197,7 @@ async function sendMessage() {
     message: text,
     model,
     runId,
+    sessionId: activeChatId,
     tabContext: tabContextData
   });
 
@@ -205,6 +235,13 @@ function listenBackground() {
       document.getElementById('messageInput').value = message.text;
       autoResizeTextarea();
       document.getElementById('messageInput').focus();
+    } else if (message.type === 'MODELS_UPDATED') {
+      const sel = document.getElementById('modelSelect');
+      const current = sel.value;
+      sel.innerHTML = message.models.map(m =>
+        `<option value="${escHtml(m.id)}">${escHtml(m.name)}</option>`
+      ).join('');
+      if ([...sel.options].some(o => o.value === current)) sel.value = current;
     }
   });
 }
@@ -212,27 +249,51 @@ function listenBackground() {
 function handleWsMessage(data) {
   if (!currentStreamBubble) return;
 
-  // 支援多種 Gateway 回應格式
-  if (data.type === 'delta' || data.event === 'text_delta') {
+  // OpenClaw Gateway 事件格式：{ type:'event', event:'...', payload:{...} }
+  if (data.type === 'event') {
+    const p = data.payload || {};
+
+    // 文字串流：event="agent", stream="assistant", data.delta
+    if (data.event === 'agent' && p.stream === 'assistant') {
+      const delta = String(p.data?.delta || '');
+      if (delta) {
+        currentStreamBubble.textContent += delta;
+        scrollToBottom();
+      }
+    }
+
+    // Agent 錯誤：event="agent", stream="lifecycle", data.phase="error"
+    if (data.event === 'agent' && p.stream === 'lifecycle' && p.data?.phase === 'error') {
+      if (!currentStreamBubble.textContent) {
+        currentStreamBubble.textContent = '⚠️ Agent 發生錯誤';
+      }
+      finishStreaming();
+    }
+
+    // 最終結束信號：event="chat", state="final"
+    if (data.event === 'chat' && p.state === 'final') {
+      // 若串流沒有內容，從 final message 取得
+      if (!currentStreamBubble.textContent) {
+        const content = p.message?.content;
+        const text = Array.isArray(content) ? String(content[0]?.text || '') : '';
+        if (text) currentStreamBubble.textContent = text;
+      }
+      finishStreaming();
+    }
+
+    return;
+  }
+
+  // 舊格式 fallback（保留相容性）
+  if (data.type === 'delta') {
     const chunk = data.delta?.text || data.text || data.content || '';
     currentStreamBubble.textContent += chunk;
     scrollToBottom();
-  } else if (data.type === 'done' || data.event === 'run_finished') {
+  } else if (data.type === 'done') {
     finishStreaming();
   } else if (data.type === 'error') {
     currentStreamBubble.textContent = `${data.message || '發生錯誤'}`;
     finishStreaming();
-  } else if (data.type === 'usage' && data.usage) {
-    // 記錄用量
-    bgMsg({
-      type: 'SAVE_USAGE',
-      data: {
-        model: data.model || document.getElementById('modelSelect').value,
-        inputTokens: data.usage.input_tokens || 0,
-        outputTokens: data.usage.output_tokens || 0,
-        costUSD: data.usage.cost_usd || 0
-      }
-    });
   }
 }
 
@@ -346,7 +407,7 @@ function renderHistory() {
     item.className = 'history-item' + (session.id === activeChatId ? ' active' : '');
 
     item.innerHTML = `
-      <div class="history-item-title">${session.title}</div>
+      <div class="history-item-title">${escHtml(session.title)}</div>
       <div class="history-item-date">${formatDate(session.createdAt)}</div>
     `;
 
@@ -368,6 +429,10 @@ function renderHistory() {
 function formatDate(isoStr) {
   const d = new Date(isoStr);
   return d.toLocaleDateString('zh-TW', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 // ── Tab 頁面內容擷取 ──────────────────────────────────────────────────────────

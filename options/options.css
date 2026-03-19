@@ -553,6 +553,32 @@ html, body {
 
 .empty-state-icon { font-size: 36px; margin-bottom: 12px; }
 
+/* Import Config */
+.import-config-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.input-config-url {
+  flex: 1;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  padding: 6px 10px;
+  font-size: 12px;
+}
+.input-config-url::placeholder { color: var(--text-muted); }
+.btn-sm { padding: 5px 10px; font-size: 12px; white-space: nowrap; }
+.import-config-result {
+  font-size: 12px;
+  min-height: 16px;
+  margin-bottom: 12px;
+}
+.import-config-result.ok  { color: var(--success); }
+.import-config-result.fail { color: var(--error); }
+.import-config-result.ing  { color: var(--text-muted); }
+
 /* Lucide icons */
 [data-lucide] {
   display: inline-block;

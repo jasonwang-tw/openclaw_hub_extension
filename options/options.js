@@ -63,9 +63,11 @@ async function loadGateways() {
     </div>
   `).join('');
   lucide.createIcons();
+}
 
-  // 事件委派
-  list.addEventListener('click', async (e) => {
+function bindGatewayEvents() {
+  // 事件委派（只綁一次，避免 loadGateways 重複呼叫時疊加）
+  document.getElementById('gatewayList').addEventListener('click', async (e) => {
     const btn = e.target.closest('[data-action]');
     if (!btn) return;
     const { action, id } = btn.dataset;
@@ -75,16 +77,17 @@ async function loadGateways() {
     if (action === 'edit') openEditGateway(id);
     if (action === 'delete') await deleteGateway(id);
   });
-}
 
-function bindGatewayEvents() {
   document.getElementById('btnAddGateway').addEventListener('click', () => {
     editingGatewayId = null;
     document.getElementById('modalTitle').textContent = '新增 Gateway';
     document.getElementById('gwName').value = '';
-    document.getElementById('gwWsUrl').value = 'ws://127.0.0.1:18789';
-    document.getElementById('gwHttpUrl').value = 'http://127.0.0.1:18789';
+    document.getElementById('gwWsUrl').value = '';
+    document.getElementById('gwHttpUrl').value = '';
     document.getElementById('gwApiKey').value = '';
+    document.getElementById('gwHubUser').value = '';
+    document.getElementById('gwHubPass').value = '';
+    document.getElementById('testConnResult').textContent = '';
     document.getElementById('gatewayModal').style.display = 'flex';
   });
 
@@ -93,8 +96,19 @@ function bindGatewayEvents() {
   });
 
   document.getElementById('btnSaveGateway').addEventListener('click', saveGateway);
-
   document.getElementById('btnTestConn').addEventListener('click', testConnection);
+}
+
+
+function populateModelSelect(models) {
+  const sel = document.getElementById('defaultModel');
+  if (!sel || !models?.length) return;
+  const current = sel.value;
+  sel.innerHTML = models.map(m =>
+    `<option value="${m.id}">${m.name}</option>`
+  ).join('');
+  // 若原本選的還在清單裡則保留
+  if ([...sel.options].some(o => o.value === current)) sel.value = current;
 }
 
 async function testConnection() {
@@ -127,9 +141,11 @@ async function saveGateway() {
   const wsUrl = document.getElementById('gwWsUrl').value.trim();
   const httpUrl = document.getElementById('gwHttpUrl').value.trim();
   const apiKey = document.getElementById('gwApiKey').value.trim();
+  const hubUsername = document.getElementById('gwHubUser').value.trim();
+  const hubPassword = document.getElementById('gwHubPass').value.trim();
 
-  if (!name || !wsUrl) {
-    alert('請填寫名稱和 WebSocket URL');
+  if (!name || (!wsUrl && !httpUrl)) {
+    alert('請填寫名稱，以及 WebSocket URL 或 HTTP URL（至少一項）');
     return;
   }
 
@@ -138,12 +154,12 @@ async function saveGateway() {
   if (editingGatewayId) {
     const idx = gateways.findIndex(g => g.id === editingGatewayId);
     if (idx >= 0) {
-      gateways[idx] = { ...gateways[idx], name, wsUrl, httpUrl, apiKey };
+      gateways[idx] = { ...gateways[idx], name, wsUrl, httpUrl, apiKey, hubUsername, hubPassword };
     }
   } else {
     const newGw = {
       id: crypto.randomUUID(),
-      name, wsUrl, httpUrl, apiKey,
+      name, wsUrl, httpUrl, apiKey, hubUsername, hubPassword,
       createdAt: new Date().toISOString(),
       status: 'unknown'
     };
@@ -167,9 +183,11 @@ async function openEditGateway(id) {
   editingGatewayId = id;
   document.getElementById('modalTitle').textContent = '編輯 Gateway';
   document.getElementById('gwName').value = gw.name;
-  document.getElementById('gwWsUrl').value = gw.wsUrl;
+  document.getElementById('gwWsUrl').value = gw.wsUrl || '';
   document.getElementById('gwHttpUrl').value = gw.httpUrl || '';
   document.getElementById('gwApiKey').value = gw.apiKey || '';
+  document.getElementById('gwHubUser').value = gw.hubUsername || '';
+  document.getElementById('gwHubPass').value = gw.hubPassword || '';
   document.getElementById('gatewayModal').style.display = 'flex';
 }
 
@@ -450,8 +468,9 @@ document.getElementById('usagePeriod').addEventListener('change', renderUsage);
 // ── SETTINGS ─────────────────────────────────────────────────────────────────
 
 async function loadSettings() {
-  const { settings = {} } = await chrome.storage.local.get('settings');
+  const { settings = {}, importedModels } = await chrome.storage.local.get(['settings', 'importedModels']);
   document.getElementById('themeToggle').checked = settings.theme === 'light';
+  if (importedModels?.length) populateModelSelect(importedModels);
   if (settings.defaultModel) {
     document.getElementById('defaultModel').value = settings.defaultModel;
   }
